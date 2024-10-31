@@ -11,7 +11,6 @@ function listen(event, selector, callback) {
 const currentClock = select('.current-clock');
 const alarm = select('.alarm-time');
 const alarmDisplay = select('.alarm');
-//let alarmBell = '<i class="fa-solid fa-bell"></i>';
 
 const inputHour = select('input[name="hours"]');
 const inputMinutes = select('input[name="minutes"]');
@@ -28,7 +27,6 @@ function alarmClock() {
         setCurrentTime();
         if (isAlarmEnabled && ! isAlarmTriggered) checkAlarm();
         if (isAlarmTriggered) {
-            //clearInterval(monitorAlarm);
             isAlarmTriggered = false;
         }
     }, 1000);    
@@ -49,8 +47,8 @@ listen('input', inputMinutes, (event) => {
 });
 
 function setCurrentTime() {
-    let h = String(getCurrentHour()).padStart(2, 0);
-    let m = String(getCurrentMinutes()).padStart(2, 0);
+    let h = paddedInput(String(getCurrentHour()));
+    let m = paddedInput(String(getCurrentMinutes()));
     currentClock.innerText = `${h}:${m}`;
 }
 
@@ -83,6 +81,30 @@ function isMinutesValid(input) {
     return true;
 }
 
+function isCurrentTime(alarmClock) {
+    const [hour, minutes] = alarmClock.split(':');
+
+    const alarmTime = new Date();
+
+    alarmTime.setHours(hour);
+    alarmTime.setMinutes(minutes);
+    alarmTime.setSeconds(0);
+    alarmTime.setMilliseconds(0);
+
+    const now = new Date();
+    const currentTime = new Date();
+    currentTime.setHours(now.getHours());
+    currentTime.setMinutes(now.getMinutes());
+    currentTime.setSeconds(0);
+    currentTime.setMilliseconds(0);
+
+    if (alarmTime.getHours() === currentTime.getHours() &&
+        alarmTime.getMinutes() === currentTime.getMinutes()){
+        return true;
+    }
+    return false;
+}
+
 function validateAlarmTime() {
     let hours = inputHour.value;
     let minutes = inputMinutes.value;
@@ -93,23 +115,31 @@ function validateAlarmTime() {
         inputHour.focus();
         return;
     } else {
-        alarmHour = hours.padStart(2, 0);
+        alarmHour = paddedInput(hours);
     }
 
     if(! isMinutesValid(minutes)) {
         inputMinutes.focus();
         return;
     } else {
-        alarmMinutes = minutes.padStart(2, 0);
+        alarmMinutes = paddedInput(minutes);
     }
 
-    setAlarmTime(alarmHour, alarmMinutes);
+    let alarmTime = `${alarmHour}:${alarmMinutes}`;
+
+    if (isCurrentTime(alarmTime)) {
+        clearInputs();
+        inputHour.focus();
+        return;
+    }
+
+    setAlarmTime(alarmTime);
     enabledAlarm();
     clearInputs();
 }
 
-function setAlarmTime(hr, min) {
-    alarm.innerText = `${hr}:${min}`;
+function setAlarmTime(alarmTime) {
+    alarm.innerText = alarmTime;
 }
 
 function enabledAlarm() {
@@ -149,7 +179,7 @@ function checkAlarm() {
     currentTime.setSeconds(0);
     currentTime.setMilliseconds(0);
 
-    if (currentTime >= alarmTime){
+    if (currentTime >= alarmTime) {
         triggerAlarm();
     }
 }
